@@ -1,0 +1,25 @@
+# Project dependencies for wafer defect detection system
+
+# Core ML/DL
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Data processing
+numpy>=1.24.0
+pandas>=1.5.0
+scikit-learn>=1.2.0
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+Pillow>=9.5.0
+
+# Optional: For faster similarity search (embeddings analysis)
+faiss-cpu>=1.7.3  # Use faiss-gpu if CUDA available
+
+# Development
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0

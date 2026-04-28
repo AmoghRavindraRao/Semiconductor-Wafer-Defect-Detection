@@ -1,0 +1,10 @@
+{
+  "tau_clf": 0.85,
+  "tau_entropy": 0.6,
+  "tau_cos": 0.7,
+  "tau_margin": 0.1,
+  "tau_knn": 0.8,
+  "accepted": 7836,
+  "coverage": 0.4350433044636909,
+  "precision": 0.9527820316488004
+}

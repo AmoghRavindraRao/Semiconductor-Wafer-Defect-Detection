@@ -1,0 +1,26 @@
+* text=auto
+* eol=lf
+
+# Python files
+*.py text eol=lf
+
+# Markdown files
+*.md text eol=lf
+
+# Data files
+*.csv text eol=lf
+*.json text eol=lf
+
+# Binary files
+*.pth binary
+*.npy binary
+*.npz binary
+*.bin binary
+*.pkl binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+# Git files
+.gitignore text eol=lf
+.gitattributes text eol=lf
