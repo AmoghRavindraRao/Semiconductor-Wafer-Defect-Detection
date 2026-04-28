@@ -2,7 +2,7 @@
 
 > The primary high-capacity model configuration with larger ViT and ResNet-50 backbone. Optimized for maximum accuracy in wafer defect classification.
 
-## 📌 Overview
+## Overview
 
 **model_large** is the full-scale implementation of the wafer defect detection system, featuring:
 - **SmallViT** with 192-dim embeddings (4 layers, 4 heads)
@@ -12,7 +12,7 @@
 
 This configuration prioritizes accuracy over speed, making it ideal for research, validation, and high-confidence production deployments.
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 model_large/
@@ -61,7 +61,7 @@ model_large/
         └── optimal_thresholds.json
 ```
 
-## 🔧 Core Scripts
+## Core Scripts
 
 ### Training
 
@@ -283,7 +283,7 @@ python train_both.py \
     --pkl_mix_per_class 500
 ```
 
-## 📊 Model Architectures
+## Model Architectures
 
 ### SmallViT (Custom Vision Transformer)
 
@@ -355,7 +355,7 @@ Input: (B, 3, 64, 64) → {0, 1, 2}
 | Data Efficiency | Requires augmentation | Better with limited data |
 | Interpretability | Attention maps | Activation maps |
 
-## 🎓 Training Details
+## Training Details
 
 ### Loss Function
 
@@ -417,7 +417,7 @@ p_rotation = 0.5  # 0/90/180/270 degrees
 
 **Note:** Test set is used for both validation during training and final evaluation. In production, use separate hold-out test.
 
-## 📈 Expected Performance
+## Expected Performance
 
 ### Typical Metrics (ResNet-50 on Test)
 
@@ -444,7 +444,7 @@ Ensemble typically improves macro F1 by **1-2%** through:
 - Learned weight optimization
 - Confidence calibration
 
-## 🔍 Debugging & Troubleshooting
+## Debugging & Troubleshooting
 
 ### "Out of Memory" Error During Training
 
@@ -485,7 +485,7 @@ python evaluate_both.py  # Uses calibrated temperatures
 # Modify train_both.py to add class_weights to CrossEntropyLoss
 ```
 
-## 🌟 Advanced Usage
+## Advanced Usage
 
 ### Mixed Precision Training (Faster)
 
@@ -515,7 +515,7 @@ Modify `make_scheduler()` in `train_both.py` to experiment with:
 - Exponential decay
 - Warm restarts (SGDR)
 
-## 📊 Results & Checkpoints
+## Results & Checkpoints
 
 ### Saved Checkpoints
 
@@ -543,14 +543,14 @@ export PYTHONHASHSEED=0
 python train_both.py --seed 42
 ```
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - **Main README**: See `../README.md` for project overview
 - **Dataset Integration**: See `LSWMD_INTEGRATION.md` for LSWMD.pkl details
 - **Small Model**: See `../model_small/README.md` for smaller configuration
 - **Code Documentation**: Docstrings in each `.py` file
 
-## 🚀 Next Steps
+## Next Steps
 
 1. **Train baseline**: Run `train_both.py` with default parameters
 2. **Evaluate ensemble**: Run `evaluate_both.py` to get calibrated metrics
@@ -558,7 +558,7 @@ python train_both.py --seed 42
 4. **Analyze embeddings**: Run `extract_embeddings.py` then `plot_embeddings.py`
 5. **Fine-tune**: Experiment with hyperparameters, data augmentation, architecture
 
-## 📝 Model Card
+## Model Card
 
 | Property | Value |
 |----------|-------|

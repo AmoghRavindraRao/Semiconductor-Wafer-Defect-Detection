@@ -17,7 +17,7 @@ This configuration prioritizes speed and efficiency, making it ideal for:
 - Resource-constrained deployments
 - Quick iteration cycles
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 model_small/
@@ -66,7 +66,7 @@ model_small/
         └── optimal_thresholds.json
 ```
 
-## 🔧 Core Scripts
+## Core Scripts
 
 All scripts are functionally identical to `model_large`, but optimized for the smaller architecture. See the script descriptions below:
 
@@ -194,7 +194,7 @@ Generate pseudo-labels for semi-supervised learning (same as model_large).
 python pseudo_label.py --confidence_threshold 0.8
 ```
 
-## 📊 Model Architectures
+## Model Architectures
 
 ### SmallViT (Reduced)
 
@@ -265,7 +265,7 @@ Input: (B, 3, 64, 64) → {0, 1, 2}
 | Peak Accuracy | ~92% | ~94% |
 | Accuracy Drop | 1-2% | Baseline |
 
-## 🎓 Training Details
+## Training Details
 
 ### Same as model_large
 
@@ -288,7 +288,7 @@ Epoch 30:  loss=0.1, val_f1=0.92 ← Peak (no improvement, early stop)
 
 **Time per Epoch:** ~2-3 minutes (vs 4-5 min for model_large)
 
-## 📈 Expected Performance
+## Expected Performance
 
 ### Typical Metrics (ResNet-18 on Test)
 
@@ -315,7 +315,7 @@ Per-Class F1:
 | **model_small** | 0.91 | 8-10ms | ~1GB | Development, edge |
 | **model_large** | 0.94 | 15-20ms | ~2GB | Production, accuracy |
 
-## ⚡ Speed Optimization Tips
+## Speed Optimization Tips
 
 ### 1. Use ONNX Export for Faster Inference
 
@@ -359,7 +359,7 @@ python predict.py --image path/to/wafer.png --device cuda
 python predict.py --image path/to/wafer.png --device cpu
 ```
 
-## 💾 Memory Efficiency
+## Memory Efficiency
 
 ### Training Memory Usage
 
@@ -383,7 +383,7 @@ python predict.py --image path/to/wafer.png --device cpu
 | Batch=1 activation | 50MB |
 | **Total (single)** | **~380MB** |
 
-## 🔍 Debugging & Troubleshooting
+## Debugging & Troubleshooting
 
 ### Quick Start Issues
 
@@ -429,7 +429,7 @@ python calibrate.py
 python -c "import torch; print(torch.load('checkpoints/vit_best.pth'))"
 ```
 
-## 🌟 Advanced Usage
+## Advanced Usage
 
 ### Transfer Learning to Custom Defect Types
 
@@ -469,7 +469,7 @@ vit.load_state_dict(torch.load('checkpoints/vit_best.pth'))
 # Visualize attention patterns for interpretability
 ```
 
-## 📊 Comparison: model_small vs. model_large
+## Comparison: model_small vs. model_large
 
 | Aspect | model_small | model_large |
 |--------|-------------|-------------|
@@ -484,7 +484,7 @@ vit.load_state_dict(torch.load('checkpoints/vit_best.pth'))
 | **Accuracy** | 0.94-0.96 | 0.95-0.97 |
 | **Best Use Case** | Development, edge | Production, research |
 
-## 🎯 Recommended Workflow
+## Recommended Workflow
 
 ### 1. Quick Prototyping (use model_small)
 ```bash
@@ -516,13 +516,13 @@ python train_both.py --weight_decay 0.01
 # Verify on large model before deployment
 ```
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - **Main README**: See `../README.md` for project overview
 - **Large Model**: See `../model_large/README.md` for full-scale configuration
 - **Dataset Integration**: See `LSWMD_INTEGRATION.md` for LSWMD.pkl details
 
-## 📝 Model Card
+## Model Card
 
 | Property | Value |
 |----------|-------|

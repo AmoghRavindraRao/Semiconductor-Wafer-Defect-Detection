@@ -2,7 +2,7 @@
 
 > A comprehensive machine learning project for automated wafer defect classification using Vision Transformers and ResNet models with supervised contrastive learning.
 
-## 📋 Project Overview
+## Project Overview
 
 This project implements a state-of-the-art wafer defect detection system designed to classify defects on semiconductor wafer maps. The system uses two parallel deep learning architectures (a custom Vision Transformer and ResNet) trained with supervised contrastive learning to achieve robust defect classification across multiple defect types.
 
@@ -34,7 +34,7 @@ The project classifies wafer defects into 9 categories:
 | **Random** | Scattered random defects | 0.5% |
 | **Scratch** | Linear scratch pattern | 0.7% |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 project_soft/
@@ -61,6 +61,7 @@ project_soft/
 │   ├── train_both.py                  # Main training script
 │   ├── evaluate_both.py               # Model evaluation & ensemble
 │   ├── predict.py                     # Inference script
+│   ├── plot_embeddings.py                 # Visualization tool for embeddings
 │   ├── extract_embeddings.py          # Extract learned representations
 │   ├── build_prototypes.py            # Build class prototypes
 │   ├── calibrate.py                   # Temperature scaling calibration
@@ -70,20 +71,18 @@ project_soft/
 │   └── LSWMD_INTEGRATION.md           # Dataset integration notes
 │
 ├── model_small/                       # Smaller model configuration
-│   ├── README.md                      # Model-specific documentation
-│   ├── checkpoints/                   # Saved model weights
-│   ├── embeddings/                    # Extracted embeddings & visualizations
-│   ├── data_cache/                    # Cached preprocessed arrays
-│   ├── pseudo_labels/                 # Generated pseudo-labels
-│   ├── results/                       # Training and evaluation results
-│   │
-│   ├── [Same structure as model_large]
-│   └── [Same Python scripts]
-│
-└── plot_embeddings.py                 # Visualization tool for embeddings
+    ├── README.md                      # Model-specific documentation
+    ├── checkpoints/                   # Saved model weights
+    ├── embeddings/                    # Extracted embeddings & visualizations
+    ├── data_cache/                    # Cached preprocessed arrays
+    ├── pseudo_labels/                 # Generated pseudo-labels
+    ├── results/                       # Training and evaluation results
+    │
+    ├── [Same structure as model_large]
+    └── [Same Python scripts] 
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -173,7 +172,7 @@ python plot_embeddings.py
 
 This generates 2D visualizations (PCA or t-SNE) of learned embeddings for all embedding sets.
 
-## 🏗️ Model Architecture
+## Model Architecture
 
 ### SmallViT (Custom Vision Transformer)
 
@@ -192,7 +191,7 @@ This generates 2D visualizations (PCA or t-SNE) of learned embeddings for all em
 - **Output**: 256-dim embeddings → 128-dim projection head
 - **Note**: Both models use identical interface for fair comparison
 
-## 🎓 Training Pipeline
+## Training Pipeline
 
 ### Stage 1: Supervised Learning (Primary)
 
@@ -219,7 +218,7 @@ For each anchor sample, positives are all same-class samples in the batch, negat
 - Balances labeled and pseudo-labeled data in training
 - Improves generalization on unlabeled splits
 
-## 📊 Model Comparison: Large vs. Small
+## Model Comparison: Large vs. Small
 
 | Component | model_large | model_small |
 |-----------|-------------|-------------|
@@ -235,7 +234,7 @@ For each anchor sample, positives are all same-class samples in the batch, negat
 - **model_large**: Best accuracy, better for research/production
 - **model_small**: Faster training/inference, edge deployment scenarios
 
-## 📈 Evaluation Metrics
+## Evaluation Metrics
 
 Models are evaluated using:
 
@@ -245,7 +244,7 @@ Models are evaluated using:
 - **Confusion Matrix**: Error analysis
 - **Calibration Error**: Probability estimate reliability
 
-## 🔧 Key Utilities
+## Key Utilities
 
 ### data_utils.py
 - `load_small_arrays()`: Load cached PNG arrays
@@ -267,7 +266,7 @@ Models are evaluated using:
 - Prototype building
 - Temperature scaling calibration
 
-## 📝 Preprocessing
+## Preprocessing
 
 All wafer maps are preprocessed to a canonical format:
 1. **Canonical Size**: 64×64 pixels
@@ -278,7 +277,7 @@ All wafer maps are preprocessed to a canonical format:
 3. **Bounding Box**: Cropped to non-background region (die + defects)
 4. **No Normalization**: Discrete values preserved for ViT patch embedding
 
-## 🎯 Results Structure
+## Results Structure
 
 Each model directory contains:
 
@@ -293,7 +292,7 @@ results/
     └── optimal_thresholds.json   # Best threshold per class
 ```
 
-## 🔍 Embedding Analysis
+## Embedding Analysis
 
 ### Extraction
 ```bash
@@ -317,7 +316,7 @@ Creates 2D projections showing:
 - Model representation quality
 - Potential overlapping classes
 
-## 🛠️ Model Calibration
+## Model Calibration
 
 ### Temperature Scaling
 
@@ -335,7 +334,7 @@ python tune_thresholds.py
 
 Sweeps decision thresholds to optimize macro F1 score per class.
 
-## 📦 Data Caching
+## Data Caching
 
 Pre-processing is expensive; caching accelerates training:
 
@@ -348,7 +347,7 @@ Cached format: `.npz` archive with:
 - `X_val`, `y_val`: Validation split
 - `X_test`, `y_test`: Test split
 
-## 🌟 Advanced Features
+## Advanced Features
 
 ### Ensemble Predictions
 Combines ViT and ResNet predictions using learned ensemble weights:
@@ -368,21 +367,21 @@ Generate and refine labels for unlabeled data:
 python pseudo_label.py --output pseudo_labels/pseudo_labels.csv
 ```
 
-## 📚 References
+## References
 
 - **Supervised Contrastive Learning**: Khosla et al. (2020)
 - **Vision Transformers**: Dosovitskiy et al. (2020)
 - **ResNet**: He et al. (2015)
 - **Temperature Scaling**: Guo et al. (2017)
 
-## 🤝 Contributing
+## Contributing
 
 This is a research/coursework project. For modifications:
 1. Document changes in model-specific README
 2. Update this main README if architecture changes
 3. Test on both model_large and model_small configurations
 
-## 📞 Contact & Support
+## Contact & Support
 
 **Course**: DSE 570 - Arizona State University  
 **Semester**: 4
