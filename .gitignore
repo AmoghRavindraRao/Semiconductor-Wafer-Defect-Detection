@@ -90,7 +90,13 @@ model_small.zip
 *.tmp
 *.temp
 *.log
-*.pkl
+
+# Model files & data (large binary files)
+*.pth          # PyTorch model checkpoints
+*.npy          # NumPy arrays (embeddings, centroids)
+*.npz          # Compressed numpy arrays (data cache)
+*.pkl          # Pickle files
+*.bin          # Binary model files (FAISS indices)
 
 # ZIP archives (if model exports)
 *.zip
