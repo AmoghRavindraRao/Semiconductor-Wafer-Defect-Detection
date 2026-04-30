@@ -92,12 +92,12 @@ model_small.zip
 *.log
 
 # Model files & data (large binary files) - model_large
-model_large/checkpoints/ensemble_weight.npy
-model_large/checkpoints/resnet_best.pth
-model_large/checkpoints/temperature.npy
-model_large/checkpoints/temperature_resnet.npy
-model_large/checkpoints/temperature_vit.npy
-model_large/checkpoints/vit_best.pth
+# model_large/checkpoints/ensemble_weight.npy
+# model_large/checkpoints/resnet_best.pth
+# model_large/checkpoints/temperature.npy
+# model_large/checkpoints/temperature_resnet.npy
+# model_large/checkpoints/temperature_vit.npy
+# model_large/checkpoints/vit_best.pth
 model_large/data_cache/pkl_arrays.npz
 model_large/data_cache/small_arrays.npz
 model_large/embeddings/centroids.npy
@@ -115,12 +115,12 @@ model_large/embeddings/val_embeddings.npy
 model_large/embeddings/val_labels.npy
 
 # Model files & data (large binary files) - model_small
-model_small/checkpoints/ensemble_weight.npy
-model_small/checkpoints/resnet_best.pth
-model_small/checkpoints/temperature.npy
-model_small/checkpoints/temperature_resnet.npy
-model_small/checkpoints/temperature_vit.npy
-model_small/checkpoints/vit_best.pth
+# model_small/checkpoints/ensemble_weight.npy
+# model_small/checkpoints/resnet_best.pth
+# model_small/checkpoints/temperature.npy
+# model_small/checkpoints/temperature_resnet.npy
+# model_small/checkpoints/temperature_vit.npy
+# model_small/checkpoints/vit_best.pth
 model_small/data_cache/pkl_arrays.npz
 model_small/data_cache/small_arrays.npz
 model_small/embeddings/centroids.npy
