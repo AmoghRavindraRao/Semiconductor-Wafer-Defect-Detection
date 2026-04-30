@@ -1,142 +1,39 @@
-# Byte-compiled / optimized / DLL files
+# Virtual environment
+swdd/
+venv/
+.venv/
+env/
+
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-
-# C extensions
-*.c
-*.so
-
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
+*.pyo
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+dist/
+build/
 
-# PyInstaller
-*.manifest
-*.spec
+# Database
+*.db
+*.db-shm
+*.db-wal
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
+# Model artifacts (too large for git — use Git LFS)
+*.npy
+*.npz
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
+# Checkpoints already handled by LFS, but exclude any untracked ones
+# model_large/checkpoints/*.pth  ← keep these tracked via LFS
 
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# OS
+.DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-.DS_Store
 
-# OS
-Thumbs.db
-.DS_Store
+# Jupyter
+.ipynb_checkpoints/
 
-
-
-# Data
-data/
-model_large.zip
-model_small.zip
-
-# Temporary files
-*.tmp
-*.temp
+# Logs
 *.log
-
-# Model files & data (large binary files) - model_large
-# model_large/checkpoints/ensemble_weight.npy
-# model_large/checkpoints/resnet_best.pth
-# model_large/checkpoints/temperature.npy
-# model_large/checkpoints/temperature_resnet.npy
-# model_large/checkpoints/temperature_vit.npy
-# model_large/checkpoints/vit_best.pth
-model_large/data_cache/pkl_arrays.npz
-model_large/data_cache/small_arrays.npz
-model_large/embeddings/centroids.npy
-model_large/embeddings/faiss_index.bin
-model_large/embeddings/faiss_labels.npy
-model_large/embeddings/faiss_sources.npy
-model_large/embeddings/pkl_labeled_embeddings.npy
-model_large/embeddings/pkl_labeled_labels.npy
-model_large/embeddings/test_embeddings.npy
-model_large/embeddings/test_labels.npy
-model_large/embeddings/train_embeddings.npy
-model_large/embeddings/train_labels.npy
-model_large/embeddings/unlabeled_embeddings.npy
-model_large/embeddings/val_embeddings.npy
-model_large/embeddings/val_labels.npy
-
-# Model files & data (large binary files) - model_small
-# model_small/checkpoints/ensemble_weight.npy
-# model_small/checkpoints/resnet_best.pth
-# model_small/checkpoints/temperature.npy
-# model_small/checkpoints/temperature_resnet.npy
-# model_small/checkpoints/temperature_vit.npy
-# model_small/checkpoints/vit_best.pth
-model_small/data_cache/pkl_arrays.npz
-model_small/data_cache/small_arrays.npz
-model_small/embeddings/centroids.npy
-model_small/embeddings/faiss_index.bin
-model_small/embeddings/faiss_labels.npy
-model_small/embeddings/faiss_sources.npy
-model_small/embeddings/pkl_labeled_embeddings.npy
-model_small/embeddings/pkl_labeled_labels.npy
-model_small/embeddings/test_embeddings.npy
-model_small/embeddings/test_labels.npy
-model_small/embeddings/train_embeddings.npy
-model_small/embeddings/train_labels.npy
-model_small/embeddings/unlabeled_embeddings.npy
-model_small/embeddings/val_embeddings.npy
-model_small/embeddings/val_labels.npy
-
-# ZIP archives (if model exports)
-*.zip
-*.tar.gz

@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WaferVision — Defect Detection Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── TOKENS ───────────────────────────────────────────────────── */
+    :root {
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+      --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+      --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+      --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+      --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+      --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
+      --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem;
+      --space-10:2.5rem; --space-12:3rem; --space-16:4rem;
+      --radius-sm:.375rem; --radius-md:.5rem; --radius-lg:.75rem; --radius-xl:1rem;
+      --transition:180ms cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-theme="dark"] {
+      --bg:#0d0f12; --surface:#13161b; --surface-2:#1a1e25; --surface-3:#22272f;
+      --border:rgba(255,255,255,0.07); --divider:rgba(255,255,255,0.05);
+      --text:#e8eaf0; --text-muted:#8b90a0; --text-faint:#4a4f60;
+      --primary:#2dd4bf; --primary-dim:rgba(45,212,191,0.12); --primary-hover:#14b8a6;
+      --success:#4ade80; --success-dim:rgba(74,222,128,0.1);
+      --warning:#fbbf24; --warning-dim:rgba(251,191,36,0.1);
+      --error:#f87171;   --error-dim:rgba(248,113,113,0.1);
+      --shadow-md:0 4px 16px rgba(0,0,0,0.4); --shadow-lg:0 12px 40px rgba(0,0,0,0.5);
+    }
+    [data-theme="light"] {
+      --bg:#f4f5f7; --surface:#ffffff; --surface-2:#f9fafb; --surface-3:#f0f1f4;
+      --border:rgba(0,0,0,0.08); --divider:rgba(0,0,0,0.05);
+      --text:#111318; --text-muted:#5a5f72; --text-faint:#adb2c4;
+      --primary:#0d9488; --primary-dim:rgba(13,148,136,0.1); --primary-hover:#0f766e;
+      --success:#16a34a; --success-dim:rgba(22,163,74,0.1);
+      --warning:#d97706; --warning-dim:rgba(217,119,6,0.1);
+      --error:#dc2626;   --error-dim:rgba(220,38,38,0.1);
+      --shadow-md:0 4px 16px rgba(0,0,0,0.08); --shadow-lg:0 12px 40px rgba(0,0,0,0.12);
+    }
+
+    /* ── BASE ─────────────────────────────────────────────────────── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;}
+    body{font-family:var(--font-body);font-size:var(--text-base);color:var(--text);background:var(--bg);min-height:100dvh;line-height:1.6;}
+    button{cursor:pointer;background:none;border:none;font:inherit;color:inherit;}
+    img,svg{display:block;}
+
+    /* ── LAYOUT ───────────────────────────────────────────────────── */
+    .app-shell{display:grid;grid-template-rows:56px 1fr;grid-template-columns:220px 1fr;grid-template-areas:"nav-top nav-top" "sidebar main";min-height:100dvh;}
+
+    /* ── TOP NAV ──────────────────────────────────────────────────── */
+    .nav-top{grid-area:nav-top;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 var(--space-6);gap:var(--space-4);position:sticky;top:0;z-index:100;}
+    .nav-logo{display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-sm);font-weight:600;letter-spacing:-0.01em;}
+    .nav-logo svg{color:var(--primary);}
+    .nav-divider{width:1px;height:20px;background:var(--border);}
+    .nav-badge{font-size:var(--text-xs);font-family:var(--font-mono);color:var(--text-muted);background:var(--surface-3);border:1px solid var(--border);padding:2px var(--space-2);border-radius:var(--radius-sm);}
+    .nav-right{margin-left:auto;display:flex;align-items:center;gap:var(--space-3);}
+    .live-dot{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs);color:var(--text-muted);}
+    .live-dot::before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .theme-toggle{width:34px;height:34px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-muted);transition:background var(--transition),color var(--transition);}
+    .theme-toggle:hover{background:var(--surface-3);color:var(--text);}
+
+    /* ── SIDEBAR ──────────────────────────────────────────────────── */
+    .sidebar{grid-area:sidebar;background:var(--surface);border-right:1px solid var(--border);padding:var(--space-4) 0;display:flex;flex-direction:column;gap:var(--space-1);position:sticky;top:56px;height:calc(100dvh - 56px);overflow-y:auto;}
+    .sidebar-label{font-size:var(--text-xs);font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);padding:var(--space-3) var(--space-5) var(--space-1);margin-top:var(--space-2);}
+    .sidebar-item{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-5);font-size:var(--text-sm);color:var(--text-muted);transition:background var(--transition),color var(--transition);cursor:pointer;border:none;width:100%;text-align:left;}
+    .sidebar-item:hover{background:var(--surface-3);color:var(--text);}
+    .sidebar-item.active{background:var(--primary-dim);color:var(--primary);font-weight:500;}
+    .sidebar-item svg{width:16px;height:16px;flex-shrink:0;}
+
+    /* ── MAIN ─────────────────────────────────────────────────────── */
+    .main{grid-area:main;padding:var(--space-8);overflow-y:auto;}
+    .page-header{margin-bottom:var(--space-8);}
+    .page-title{font-size:var(--text-xl);font-weight:700;letter-spacing:-0.02em;line-height:1.15;}
+    .page-subtitle{font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--space-1);}
+
+    /* ── KPI STRIP ────────────────────────────────────────────────── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--space-4);margin-bottom:var(--space-8);}
+    .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);transition:box-shadow var(--transition),border-color var(--transition);}
+    .kpi-card:hover{box-shadow:var(--shadow-md);}
+    .kpi-label{font-size:var(--text-xs);font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);display:flex;align-items:center;gap:var(--space-2);}
+    .kpi-label svg{width:13px;height:13px;}
+    .kpi-value{font-size:var(--text-xl);font-weight:700;font-family:var(--font-mono);letter-spacing:-0.02em;color:var(--text);line-height:1;}
+    .kpi-value.accent{color:var(--primary);}
+    .kpi-value.success{color:var(--success);}
+    .kpi-sub{font-size:var(--text-xs);color:var(--text-muted);display:flex;align-items:center;gap:var(--space-1);}
+    .kpi-delta{font-size:var(--text-xs);font-weight:600;padding:1px var(--space-1);border-radius:var(--radius-sm);}
+    .kpi-delta.up{color:var(--success);background:var(--success-dim);}
+    .kpi-delta.down{color:var(--error);background:var(--error-dim);}
+    .kpi-delta.flat{color:var(--text-muted);background:var(--surface-3);}
+
+    /* ── SECTION PLACEHOLDERS ─────────────────────────────────────── */
+    .section-placeholder{background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius-lg);padding:var(--space-10);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);color:var(--text-faint);text-align:center;margin-bottom:var(--space-6);min-height:220px;}
+    .section-placeholder .ph-title{font-size:var(--text-base);font-weight:600;color:var(--text-muted);}
+    .section-placeholder .ph-tag{font-size:var(--text-xs);font-family:var(--font-mono);background:var(--surface-3);border:1px solid var(--border);padding:2px var(--space-2);border-radius:var(--radius-sm);color:var(--text-faint);}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);margin-bottom:var(--space-6);}
+
+    /* ── INFERENCE PANEL ──────────────────────────────────────────── */
+    .inference-layout{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-6);align-items:start;}
+
+    /* Upload zone */
+    .upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius-xl);padding:var(--space-10) var(--space-6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-4);text-align:center;cursor:pointer;transition:border-color var(--transition),background var(--transition);min-height:320px;position:relative;}
+    .upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:var(--primary-dim);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .upload-icon{color:var(--text-faint);transition:color var(--transition);}
+    .upload-zone:hover .upload-icon{color:var(--primary);}
+    .upload-title{font-size:var(--text-base);font-weight:600;color:var(--text);}
+    .upload-sub{font-size:var(--text-sm);color:var(--text-muted);}
+    .upload-hint{font-size:var(--text-xs);font-family:var(--font-mono);color:var(--text-faint);background:var(--surface-3);padding:2px var(--space-2);border-radius:var(--radius-sm);}
+
+    /* Preview inside upload zone */
+    .preview-img{width:100%;max-height:240px;object-fit:contain;border-radius:var(--radius-lg);border:1px solid var(--border);}
+
+    /* Method selector */
+    .method-row{display:flex;gap:var(--space-2);margin-top:var(--space-4);flex-wrap:wrap;justify-content:center;}
+    .method-btn{font-size:var(--text-xs);font-family:var(--font-mono);padding:var(--space-1) var(--space-3);border-radius:var(--radius-full);border:1px solid var(--border);color:var(--text-muted);background:var(--surface-2);cursor:pointer;transition:all var(--transition);}
+    .method-btn:hover{border-color:var(--primary);color:var(--primary);}
+    .method-btn.selected{background:var(--primary-dim);border-color:var(--primary);color:var(--primary);font-weight:600;}
+
+    /* Predict button */
+    .btn-predict{margin-top:var(--space-4);width:100%;padding:var(--space-3) var(--space-6);background:var(--primary);color:#0d1117;font-weight:700;font-size:var(--text-sm);border-radius:var(--radius-lg);transition:background var(--transition),transform var(--transition);border:none;cursor:pointer;}
+    .btn-predict:hover{background:var(--primary-hover);}
+    .btn-predict:active{transform:scale(0.98);}
+    .btn-predict:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+    /* Result card */
+    .result-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-5);min-height:320px;}
+    .result-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-3);height:100%;color:var(--text-faint);text-align:center;flex:1;}
+    .result-empty p{font-size:var(--text-sm);color:var(--text-muted);}
+
+    /* Predicted class badge */
+    .result-class-row{display:flex;align-items:center;gap:var(--space-3);}
+    .class-badge{display:inline-flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-4);border-radius:var(--radius-full);font-weight:700;font-size:var(--text-lg);letter-spacing:-0.01em;}
+
+    /* Confidence bar */
+    .conf-section{display:flex;flex-direction:column;gap:var(--space-2);}
+    .conf-label-row{display:flex;justify-content:space-between;align-items:center;font-size:var(--text-xs);}
+    .conf-label{color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+    .conf-value{font-family:var(--font-mono);font-weight:700;color:var(--text);}
+    .conf-track{height:8px;background:var(--surface-3);border-radius:var(--radius-full);overflow:hidden;}
+    .conf-fill{height:100%;border-radius:var(--radius-full);transition:width 0.6s cubic-bezier(0.16,1,0.3,1);}
+
+    /* Method + TTA tags */
+    .result-tags{display:flex;gap:var(--space-2);flex-wrap:wrap;}
+    .result-tag{font-size:var(--text-xs);font-family:var(--font-mono);padding:2px var(--space-2);border-radius:var(--radius-sm);border:1px solid var(--border);color:var(--text-muted);background:var(--surface-2);}
+    .result-tag.green{color:var(--success);background:var(--success-dim);border-color:transparent;}
+    .result-tag.yellow{color:var(--warning);background:var(--warning-dim);border-color:transparent;}
+
+    /* Per-class probability breakdown */
+    .prob-breakdown{display:flex;flex-direction:column;gap:var(--space-2);}
+    .prob-breakdown-title{font-size:var(--text-xs);font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
+    .prob-row{display:grid;grid-template-columns:90px 1fr 48px;align-items:center;gap:var(--space-2);}
+    .prob-class{font-size:var(--text-xs);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .prob-class.top{color:var(--text);font-weight:600;}
+    .prob-bar-track{height:5px;background:var(--surface-3);border-radius:var(--radius-full);overflow:hidden;}
+    .prob-bar-fill{height:100%;border-radius:var(--radius-full);background:var(--primary);opacity:.5;transition:width .5s cubic-bezier(0.16,1,0.3,1);}
+    .prob-bar-fill.top{opacity:1;}
+    .prob-pct{font-size:var(--text-xs);font-family:var(--font-mono);color:var(--text-muted);text-align:right;}
+    .prob-pct.top{color:var(--primary);font-weight:600;}
+
+    /* Loading spinner */
+    .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loading-state{display:flex;flex-direction:column;align-items:center;gap:var(--space-3);padding:var(--space-10) 0;color:var(--text-muted);font-size:var(--text-sm);}
+
+    /* Reset button */
+    .btn-reset{width:100%;padding:var(--space-2) var(--space-4);border-radius:var(--radius-md);border:1px solid var(--border);font-size:var(--text-sm);color:var(--text-muted);background:var(--surface-2);transition:all var(--transition);}
+    .btn-reset:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-dim);}
+
+    /* ── RESPONSIVE ───────────────────────────────────────────────── */
+    @media(max-width:900px){
+      .app-shell{grid-template-columns:1fr;grid-template-areas:"nav-top" "main";}
+      .sidebar{display:none;}
+      .main{padding:var(--space-5);}
+      .grid-2,.inference-layout{grid-template-columns:1fr;}
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- NAV -->
+  <nav class="nav-top">
+    <div class="nav-logo">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="1" y="1" width="20" height="20" rx="4" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="11" cy="11" r="5" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="11" cy="11" r="1.5" fill="currentColor"/>
+        <line x1="1" y1="11" x2="6" y2="11" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="16" y1="11" x2="21" y2="11" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="11" y1="1" x2="11" y2="6" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="11" y1="16" x2="11" y2="21" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      WaferVision
+    </div>
+    <div class="nav-divider"></div>
+    <span class="nav-badge">SmallViT · Stage 1</span>
+    <div class="nav-right">
+      <span class="live-dot">Model Online</span>
+      <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <span class="sidebar-label">Navigation</span>
+    <button class="sidebar-item active" onclick="showPage('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Overview
+    </button>
+    <button class="sidebar-item" onclick="showPage('inference')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Live Inference
+    </button>
+    <button class="sidebar-item" onclick="showPage('performance')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Performance
+    </button>
+    <button class="sidebar-item" onclick="showPage('history')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Prediction Log
+    </button>
+    <span class="sidebar-label">System</span>
+    <button class="sidebar-item" onclick="showPage('pipeline')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Pipeline
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main-content">
+
+    <!-- ════════════════ PAGE: OVERVIEW ════════════════ -->
+    <div id="page-overview">
+      <div class="page-header">
+        <h1 class="page-title">Overview</h1>
+        <p class="page-subtitle">Semiconductor wafer defect classification · WM-811K dataset · SmallViT</p>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Macro F1 Score
+          </div>
+          <!-- VALUE: results/comparison_report.md — Stage 1 test set -->
+          <div class="kpi-value accent" id="kpi-overview-f1">0.7515</div>
+          <div class="kpi-sub"><span class="kpi-delta up">Ensemble</span> Test set · 9 classes</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Accuracy
+          </div>
+          <!-- VALUE: results/comparison_report.md — Stage 1 -->
+          <div class="kpi-value success" id="kpi-live-s1-acc">95.6%</div>
+          <div class="kpi-sub"><span class="kpi-delta up">Ensemble</span> Held-out test split</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Dataset Size
+          </div>
+          <!-- VALUE: WM-811K total from pseudo_label.py -->
+          <div class="kpi-value">638,507</div>
+          <div class="kpi-sub">Total wafers · WM-811K</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Defect Classes
+          </div>
+          <!-- VALUE: utils.py CLASS_TO_IDX — 9 canonical classes -->
+          <div class="kpi-value">9</div>
+          <div class="kpi-sub">Center · Donut · Scratch + 6 more</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Calibration Temp
+          </div>
+          <!-- VALUE: results/comparison_report.md -->
+          <div class="kpi-value" style="font-size:var(--text-lg)">T = 0.8745</div>
+          <div class="kpi-sub">Temperature scaling</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Active Model
+          </div>
+          <!-- VALUE: hardcoded — SmallViT from model.py -->
+          <div class="kpi-value" style="font-size:var(--text-base);color:var(--primary);font-family:var(--font-mono)">SmallViT</div>
+          <div class="kpi-sub"><span class="kpi-delta up">SmallViT</span> ~1.25M params</div>
+        </div>
+      </div>
+
+      <!-- Inference quick-access on overview -->
+      <div class="section-placeholder" style="cursor:pointer;border-style:solid;border-color:var(--primary-dim);" onclick="showPage('inference')">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--primary)">
+          <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="12" cy="12" r="4"/>
+          <path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
+        </svg>
+        <div class="ph-title" style="color:var(--primary)">→ Open Live Inference Panel</div>
+        <div class="ph-tag">Upload a wafer image and classify it</div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Mini F1 chart — overview -->
+        <div class="kpi-card" style="padding:var(--space-5);">
+          <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-1);">Per-Class F1 · Stage 1</div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-4);">All 9 defect classes</div>
+          <div style="position:relative;height:200px;">
+            <canvas id="chart-overview-f1"></canvas>
+          </div>
+          <div style="margin-top:var(--space-3);text-align:right;">
+            <button onclick="showPage('performance')" style="font-size:var(--text-xs);color:var(--primary);background:none;border:none;cursor:pointer;">View full report →</button>
+          </div>
+        </div>
+        <!-- Donut class distribution — mock until /stats is live -->
+        <div class="kpi-card" style="padding:var(--space-5);">
+          <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-1);">Dataset Class Distribution</div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-4);">
+            <!-- Stats from FastAPI /stats endpoint -->
+            Mock · wire to <span style="font-family:var(--font-mono)">GET /stats</span>
+          </div>
+          <div style="position:relative;height:200px;">
+            <canvas id="chart-class-dist"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-placeholder">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <div class="ph-title">Recent Prediction Log</div>
+        <div class="ph-tag">Live from /history · SQLite</div>
+      </div>
+    </div>
+
+    <!-- ════════════════ PAGE: LIVE INFERENCE ════════════════ -->
+    <div id="page-inference" style="display:none">
+      <div class="page-header">
+        <h1 class="page-title">Live Inference</h1>
+        <p class="page-subtitle">Upload a wafer map image · classify in real-time · results logged to SQLite</p>
+      </div>
+
+      <div class="inference-layout">
+
+        <!-- LEFT: Upload -->
+        <div>
+          <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+            <input type="file" id="file-input" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
+            <div id="upload-default" style="display:flex;flex-direction:column;align-items:center;gap:var(--space-4);text-align:center;width:100%;">
+              <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>
+              </svg>
+              <div class="upload-title">Drop wafer image here</div>
+              <div class="upload-sub">or click to browse</div>
+              <span class="upload-hint">PNG · JPG · 64×64 canonical format</span>
+            </div>
+            <img id="preview-img" class="preview-img" style="display:none" alt="Wafer preview"/>
+          </div>
+
+          <!-- Method selector -->
+          <div class="method-row" id="method-row">
+            <span style="font-size:var(--text-xs);color:var(--text-muted);align-self:center">Method</span>
+            <button class="method-btn selected" onclick="selectMethod('ensemble', this)">ensemble</button>
+            <button class="method-btn" onclick="selectMethod('tta', this)">tta</button>
+            <button class="method-btn" onclick="selectMethod('vit', this)">vit</button>
+            <button class="method-btn" onclick="selectMethod('resnet', this)">resnet</button>
+          </div>
+          <div class="method-row" id="model-row" style="margin-top:var(--space-2)">
+            <span style="font-size:var(--text-xs);color:var(--text-muted);align-self:center">Model</span>
+            <button class="method-btn selected" id="model-btn-large" onclick="selectModel('large', this)">large &middot; ResNet-50</button>
+            <button class="method-btn" id="model-btn-small" onclick="selectModel('small', this)">small &middot; ResNet-18</button>
+          </div>
+
+          <button class="btn-predict" id="btn-predict" onclick="runInference()" disabled>
+            Classify Wafer
+          </button>
+        </div>
+
+        <!-- RIGHT: Result -->
+        <div class="result-card" id="result-card">
+          <div class="result-empty" id="result-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--text-faint)">
+              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+            </svg>
+            <p>Upload a wafer image and hit<br><strong>Classify Wafer</strong> to see results</p>
+          </div>
+
+          <!-- Loading state (hidden by default) -->
+          <div class="loading-state" id="result-loading" style="display:none">
+            <div class="spinner"></div>
+            <span id="loading-text">Running inference…</span>
+          </div>
+
+          <!-- Result content (hidden by default) -->
+          <div id="result-content" style="display:none;flex-direction:column;gap:var(--space-5);">
+
+            <!-- Class badge -->
+            <div>
+              <div style="font-size:var(--text-xs);font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:var(--space-2);">Predicted Class</div>
+              <div class="result-class-row">
+                <div class="class-badge" id="class-badge">—</div>
+              </div>
+            </div>
+
+            <!-- Confidence bar -->
+            <div class="conf-section">
+              <div class="conf-label-row">
+                <span class="conf-label">Confidence</span>
+                <span class="conf-value" id="conf-value">—</span>
+              </div>
+              <div class="conf-track">
+                <div class="conf-fill" id="conf-fill" style="width:0%"></div>
+              </div>
+            </div>
+
+            <!-- Tags: method, TTA agreement -->
+            <div class="result-tags" id="result-tags"></div>
+
+            <!-- Per-class probability breakdown -->
+            <div class="prob-breakdown">
+              <div class="prob-breakdown-title">All class probabilities</div>
+              <div id="prob-rows"></div>
+            </div>
+
+            <button class="btn-reset" onclick="resetInference()">↩ Try another image</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Note about mock mode -->
+      <div style="margin-top:var(--space-6);padding:var(--space-4);background:var(--warning-dim);border:1px solid var(--warning);border-radius:var(--radius-lg);font-size:var(--text-xs);color:var(--warning);font-family:var(--font-mono)" id="mock-banner">
+        &#9888; MOCK MODE &mdash; results are simulated while API is unreachable.
+        Start <code>uvicorn api:app --reload --port 8000</code> and this banner disappears.
+        Uses <code>EnsembleWaferPredictor</code> (ViT + ResNet ensemble) from <code>predict.py</code>.
+      </div>
+    </div>
+
+    <!-- ════════════════ PAGE: PERFORMANCE ════════════════ -->
+    <div id="page-performance" style="display:none">
+      <div class="page-header">
+        <h1 class="page-title">Performance</h1>
+        <p class="page-subtitle">Per-class F1 · Ensemble vs ViT · model_large/results/from_scratch/comparison.md</p>
+        <div style="margin-top:var(--space-2);font-size:var(--text-xs);font-family:var(--font-mono);">
+          <span id="data-source-badge" style="color:var(--warning)">○ Fallback — wire GET /results to go live</span>
+        </div>
+      </div>
+
+      <!-- Stage comparison KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--space-4);margin-bottom:var(--space-8);">
+        <div class="kpi-card">
+          <div class="kpi-label">Ensemble F1 (test)</div>
+          <!-- VALUE: comparison_report.md -->
+          <div class="kpi-value accent" id="kpi-live-s1-f1">0.7515</div>
+          <div class="kpi-sub"><span class="kpi-delta up">Ensemble</span> Test set</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">ViT F1 (test)</div>
+          <!-- VALUE: comparison_report.md -->
+          <div class="kpi-value" id="kpi-live-s2-f1">0.5802</div>
+          <div class="kpi-sub"><span class="kpi-delta down">−0.0700</span> Regressed</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Ensemble Accuracy</div>
+          <!-- VALUE: comparison_report.md -->
+          <div class="kpi-value success" id="kpi-live-s1-acc">95.6%</div>
+          <div class="kpi-sub">Held-out test split</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">ViT Accuracy</div>
+          <!-- VALUE: comparison_report.md -->
+          <div class="kpi-value" id="kpi-live-s2-acc">83.2%</div>
+          <div class="kpi-sub"><span class="kpi-delta down">−6.95pp</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">§13 Gate</div>
+          <div class="kpi-value" style="font-size:var(--text-base);color:var(--error);font-family:var(--font-mono)">FAILED</div>
+          <div class="kpi-sub">5 classes regressed &gt;0.02</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Best Class</div>
+          <div class="kpi-value" style="font-size:var(--text-base);color:var(--primary);font-family:var(--font-mono)">Near-full</div>
+          <div class="kpi-sub">F1 = 0.9910 (Stage 1)</div>
+        </div>
+      </div>
+
+      <!-- Per-class F1 grouped bar chart -->
+      <div class="kpi-card" style="margin-bottom:var(--space-6);padding:var(--space-6);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5);">
+          <div>
+            <div style="font-size:var(--text-base);font-weight:600;">Per-Class F1 Score</div>
+            <div style="font-size:var(--text-xs);color:var(--text-muted);margin-top:2px;">Stage 1 vs Stage 2 · all 9 defect classes</div>
+          </div>
+          <div style="display:flex;gap:var(--space-3);align-items:center;font-size:var(--text-xs);color:var(--text-muted);">
+            <span style="display:flex;align-items:center;gap:var(--space-1);">
+              <span style="width:10px;height:10px;border-radius:2px;background:#2dd4bf;display:inline-block;"></span>Stage 1
+            </span>
+            <span style="display:flex;align-items:center;gap:var(--space-1);">
+              <span style="width:10px;height:10px;border-radius:2px;background:#f87171;display:inline-block;"></span>Stage 2
+            </span>
+          </div>
+        </div>
+        <div style="position:relative;height:320px;">
+          <canvas id="chart-per-class-f1"></canvas>
+        </div>
+      </div>
+
+      <!-- F1 detail table -->
+      <div class="kpi-card" style="padding:var(--space-6);">
+        <div style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-4);">Detailed F1 Breakdown</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:var(--text-sm);">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;">
+                <th style="text-align:left;padding:var(--space-2) var(--space-3);">Class</th>
+                <th style="text-align:right;padding:var(--space-2) var(--space-3);">Ensemble</th>
+                <th style="text-align:right;padding:var(--space-2) var(--space-3);">ViT</th>
+                <th style="text-align:right;padding:var(--space-2) var(--space-3);">Δ</th>
+                <th style="text-align:left;padding:var(--space-2) var(--space-3);">Status (Ensemble)</th>
+              </tr>
+            </thead>
+            <tbody id="f1-table-body"></tbody>
+          </table>
+        </div>
+        <!-- VALUE NOTE: all values from results/comparison_report.md -->
+        <div style="margin-top:var(--space-4);font-size:var(--text-xs);color:var(--text-faint);font-family:var(--font-mono);">Source: results/comparison_report.md — update when new eval runs</div>
+      </div>
+    </div>
+
+      <!-- Threshold Tuning Panel -->
+  <div class="kpi-card" style="padding:var(--space-6);margin-bottom:var(--space-6);">
+    <div style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-4);">
+      Threshold Tuning · Selective Prediction
+      <span id="thr-sweep-count" style="font-size:var(--text-xs);font-weight:400;color:var(--text-muted);margin-left:var(--space-3);">results/threshold_tuning/</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-4);margin-bottom:var(--space-5);">
+      <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:var(--space-4);text-align:center;">
+        <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-1);">Coverage</div>
+        <div style="font-size:var(--text-2xl);font-weight:700;color:var(--primary);" id="thr-coverage">43.5%</div>
+        <div style="font-size:var(--text-xs);color:var(--text-faint);">accepted / total</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:var(--space-4);text-align:center;">
+        <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-1);">Precision</div>
+        <div style="font-size:var(--text-2xl);font-weight:700;color:var(--success);" id="thr-precision">95.3%</div>
+        <div style="font-size:var(--text-xs);color:var(--text-faint);">correct / accepted</div>
+      </div>
+      <div style="background:var(--surface-2);border-radius:var(--radius-md);padding:var(--space-4);text-align:center;">
+        <div style="font-size:var(--text-xs);color:var(--text-muted);margin-bottom:var(--space-1);">Accepted</div>
+        <div style="font-size:var(--text-2xl);font-weight:700;color:var(--text);" id="thr-accepted">7,836</div>
+        <div style="font-size:var(--text-xs);color:var(--text-faint);">of 18,006 test samples</div>
+      </div>
+    </div>
+    <div style="font-size:var(--text-xs);font-weight:600;color:var(--text-muted);margin-bottom:var(--space-3);text-transform:uppercase;letter-spacing:.05em;">Chosen Thresholds</div>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);font-family:var(--font-mono);font-size:var(--text-xs);">
+      <span style="background:var(--surface-3);padding:2px 10px;border-radius:999px;">τ_clf&nbsp;=&nbsp;<b id="thr-tau-clf">0.85</b></span>
+      <span style="background:var(--surface-3);padding:2px 10px;border-radius:999px;">τ_entropy&nbsp;=&nbsp;<b id="thr-tau-entropy">0.6</b></span>
+      <span style="background:var(--surface-3);padding:2px 10px;border-radius:999px;">τ_cos&nbsp;=&nbsp;<b id="thr-tau-cos">0.7</b></span>
+      <span style="background:var(--surface-3);padding:2px 10px;border-radius:999px;">τ_margin&nbsp;=&nbsp;<b id="thr-tau-margin">0.1</b></span>
+      <span style="background:var(--surface-3);padding:2px 10px;border-radius:999px;">τ_knn&nbsp;=&nbsp;<b id="thr-tau-knn">0.8</b></span>
+    </div>
+    <div style="margin-top:var(--space-3);font-size:var(--text-xs);color:var(--text-faint);">
+      Source: results/threshold_tuning/chosen_thresholds.json · 243 combos swept · precision target ≥ 0.95
+    </div>
+  </div>
+
+<!-- ════════════════ PAGE: HISTORY ════════════════ -->
+    <div id="page-history" style="display:none">
+      <div class="page-header">
+        <h1 class="page-title">Prediction Log</h1>
+        <p class="page-subtitle">Live from SQLite via <span style="font-family:var(--font-mono);font-size:var(--text-xs)">GET /history</span></p>
+      </div>
+
+      <!-- Stats bar -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:var(--space-4);margin-bottom:var(--space-6);">
+        <div class="kpi-card">
+          <div class="kpi-label">Total Logged</div>
+          <div class="kpi-value accent" id="log-total">—</div>
+          <div class="kpi-sub">All predictions in DB</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Last Prediction</div>
+          <div class="kpi-value" style="font-size:var(--text-base);font-family:var(--font-mono)" id="log-last-class">—</div>
+          <div class="kpi-sub" id="log-last-time" style="font-family:var(--font-mono)">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Confidence</div>
+          <div class="kpi-value success" id="log-avg-conf">—</div>
+          <div class="kpi-sub">From logged predictions</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">DB Source</div>
+          <div class="kpi-value" style="font-size:var(--text-xs);font-family:var(--font-mono);color:var(--primary)" id="log-db-badge">—</div>
+          <div class="kpi-sub" id="log-db-type">Checking…</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);">
+        <div style="font-size:var(--text-sm);font-weight:600;">Recent Predictions</div>
+        <div style="display:flex;gap:var(--space-3);align-items:center;">
+          <span id="log-source-badge" style="font-size:var(--text-xs);font-family:var(--font-mono);color:var(--warning)">○ mock mode</span>
+          <button onclick="loadHistory()" style="font-size:var(--text-xs);padding:var(--space-1) var(--space-3);border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;">↻ Refresh</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="kpi-card" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:var(--text-sm);">
+            <thead>
+              <tr style="background:var(--surface-2);border-bottom:1px solid var(--border);">
+                <th style="text-align:left;padding:var(--space-3) var(--space-4);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;">Wafer ID</th>
+                <th style="text-align:left;padding:var(--space-3) var(--space-4);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;">Predicted Class</th>
+                <th style="text-align:right;padding:var(--space-3) var(--space-4);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;">Confidence</th>
+                <th style="text-align:left;padding:var(--space-3) var(--space-4);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;">Method</th>
+                <th style="text-align:left;padding:var(--space-3) var(--space-4);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);font-weight:600;">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:var(--space-10);color:var(--text-muted);">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-3);">
+                  <div class="spinner"></div>
+                  <span>Loading predictions…</span>
+                </div>
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div style="margin-top:var(--space-4);padding:var(--space-3) var(--space-4);background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-md);font-size:var(--text-xs);color:var(--text-muted);font-family:var(--font-mono);">
+        Logs written by api.py → log_prediction() on every POST /predict call · schema: predictions(id, wafer_id, predicted_class, class_idx, confidence, method, vit_pred, resnet_pred, created_at)
+      </div>
+    </div>
+
+    <!-- ════════════════ PAGE: PIPELINE ════════════════ -->
+    <div id="page-pipeline" style="display:none">
+      <div class="page-header">
+        <h1 class="page-title">Pipeline</h1>
+        <p class="page-subtitle">Training and inference architecture — ViT + ResNet ensemble</p>
+      </div>
+
+      <!-- ── TRAINING PIPELINE ── -->
+      <div style="margin-bottom:var(--space-6);">
+        <div style="font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:var(--space-4);">Training Pipeline</div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;">
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:110px;">
+            <div style="font-size:18px;margin-bottom:4px;">🗄️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">WM-811K</div>
+            <div style="font-size:10px;color:var(--text-muted);">638,507 wafers</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:110px;">
+            <div style="font-size:18px;margin-bottom:4px;">⚙️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Preprocess</div>
+            <div style="font-size:10px;color:var(--text-muted);">to_canonical 64×64</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--primary-dim);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:130px;">
+            <div style="font-size:18px;margin-bottom:4px;">🧠</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--primary);">ViT-192</div>
+            <div style="font-size:10px;color:var(--text-muted);">4L · 4H · CE+SupCon</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:14px;">+</div>
+          <div style="background:var(--surface);border:1px solid var(--primary-dim);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:130px;">
+            <div style="font-size:18px;margin-bottom:4px;">🧠</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--primary);">ResNet-50</div>
+            <div style="font-size:10px;color:var(--text-muted);">from scratch · CE+SupCon</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">🌡️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Calibration</div>
+            <div style="font-size:10px;color:var(--text-muted);">T_vit=0.848 · T_rn=0.823</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">⚖️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Weight Sweep</div>
+            <div style="font-size:10px;color:var(--text-muted);">best w=1.0 (ResNet)</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--success);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">✅</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--success);">Checkpoints</div>
+            <div style="font-size:10px;color:var(--text-muted);">val F1=0.9838</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── INFERENCE PIPELINE ── -->
+      <div style="margin-bottom:var(--space-6);">
+        <div style="font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:var(--space-4);">Inference Pipeline (Live)</div>
+        <div style="display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;">
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:110px;">
+            <div style="font-size:18px;margin-bottom:4px;">🖼️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Wafer Image</div>
+            <div style="font-size:10px;color:var(--text-muted);">PNG / JPG upload</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:110px;">
+            <div style="font-size:18px;margin-bottom:4px;">⚙️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Preprocess</div>
+            <div style="font-size:10px;color:var(--text-muted);">RGB → {0,1,2} · 64×64</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--primary-dim);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">🔀</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--primary);">Dual Forward</div>
+            <div style="font-size:10px;color:var(--text-muted);">ViT + ResNet-50</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">🌡️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Temp Scaling</div>
+            <div style="font-size:10px;color:var(--text-muted);">calibrated softmax</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">⚖️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--text);">Ensemble</div>
+            <div style="font-size:10px;color:var(--text-muted);">w·p_rn + (1-w)·p_vit</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--warning);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:120px;">
+            <div style="font-size:18px;margin-bottom:4px;">🚦</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--warning);">Threshold Gate</div>
+            <div style="font-size:10px;color:var(--text-muted);">5 τ criteria · 43.5% cov</div>
+          </div>
+          <div style="color:var(--text-faint);font-size:18px;">→</div>
+
+          <div style="background:var(--surface);border:1px solid var(--success);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);text-align:center;min-width:110px;">
+            <div style="font-size:18px;margin-bottom:4px;">🏷️</div>
+            <div style="font-size:var(--text-xs);font-weight:600;color:var(--success);">Prediction</div>
+            <div style="font-size:10px;color:var(--text-muted);">class + confidence</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── MODEL SPECS ── -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--space-4);">
+
+        <div class="kpi-card" style="padding:var(--space-5);">
+          <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3);color:var(--primary);">ViT-192 (SmallViT)</div>
+          <table style="width:100%;font-size:var(--text-xs);border-collapse:collapse;">
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Input</td><td style="text-align:right;font-family:var(--font-mono);">64×64 · {0,1,2}</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Patch size</td><td style="text-align:right;font-family:var(--font-mono);">8×8</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Embed dim</td><td style="text-align:right;font-family:var(--font-mono);">192</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Depth / Heads</td><td style="text-align:right;font-family:var(--font-mono);">4L · 4H</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Projection</td><td style="text-align:right;font-family:var(--font-mono);">256→128 dim</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Loss</td><td style="text-align:right;font-family:var(--font-mono);">CE + 0.5×SupCon</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Test macro F1</td><td style="text-align:right;font-family:var(--font-mono);color:var(--warning);">0.5802</td></tr>
+          </table>
+        </div>
+
+        <div class="kpi-card" style="padding:var(--space-5);">
+          <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3);color:var(--primary);">ResNet-50</div>
+          <table style="width:100%;font-size:var(--text-xs);border-collapse:collapse;">
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Input</td><td style="text-align:right;font-family:var(--font-mono);">64×64 · float32</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Backbone</td><td style="text-align:right;font-family:var(--font-mono);">ResNet-50</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Pretraining</td><td style="text-align:right;font-family:var(--font-mono);">from scratch</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Projection</td><td style="text-align:right;font-family:var(--font-mono);">256→128 dim</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Loss</td><td style="text-align:right;font-family:var(--font-mono);">CE + 0.5×SupCon</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Test macro F1</td><td style="text-align:right;font-family:var(--font-mono);color:var(--success);">0.7515</td></tr>
+          </table>
+        </div>
+
+        <div class="kpi-card" style="padding:var(--space-5);">
+          <div style="font-size:var(--text-sm);font-weight:600;margin-bottom:var(--space-3);color:var(--primary);">Training Config</div>
+          <table style="width:100%;font-size:var(--text-xs);border-collapse:collapse;">
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Optimizer</td><td style="text-align:right;font-family:var(--font-mono);">AdamW</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Learning rate</td><td style="text-align:right;font-family:var(--font-mono);">3e-4</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Batch size</td><td style="text-align:right;font-family:var(--font-mono);">128</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Epochs</td><td style="text-align:right;font-family:var(--font-mono);">50</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Schedule</td><td style="text-align:right;font-family:var(--font-mono);">cosine + 5ep warmup</td></tr>
+            <tr><td style="color:var(--text-muted);padding:2px 0;">Val macro F1</td><td style="text-align:right;font-family:var(--font-mono);color:var(--success);">0.9838</td></tr>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // API_BASE — empty string = served by FastAPI at same origin (GET /).
+  // Change to 'http://localhost:8000' only when opening HTML file directly from disk.
+  const API_BASE = '';
+// ── CLASS COLOURS ────────────────────────────────────────────────
+// From utils.py IDX_TO_CLASS — 9 canonical classes
+const CLASS_COLORS = {
+  'Center':    { bg:'rgba(45,212,191,0.15)', text:'#2dd4bf' },
+  'Donut':     { bg:'rgba(251,191,36,0.15)', text:'#fbbf24' },
+  'Edge-Loc':  { bg:'rgba(248,113,113,0.15)', text:'#f87171' },
+  'Edge-Ring': { bg:'rgba(96,165,250,0.15)', text:'#60a5fa' },
+  'Loc':       { bg:'rgba(248,113,113,0.15)', text:'#f87171' },
+  'Near-full': { bg:'rgba(167,139,250,0.15)', text:'#a78bfa' },
+  'Random':    { bg:'rgba(52,211,153,0.15)', text:'#34d399' },
+  'Scratch':   { bg:'rgba(251,146,60,0.15)', text:'#fb923c' },
+  'none':      { bg:'rgba(139,144,160,0.15)', text:'#8b90a0' },
+};
+const CLASS_NAMES = ['Center','Donut','Edge-Loc','Edge-Ring','Loc','Near-full','Random','Scratch','none'];
+
+// ── MOCK RESPONSES ───────────────────────────────────────────────
+// TODO: replace mockPredict() with real fetch('POST /predict') call
+// Response shape matches WaferDefectPredictor.predict() output from predict.py
+const MOCK_RESPONSES = [
+    { class_name:'Edge-Ring', class_idx:3, confidence:0.967,
+      method:'ensemble', softmax_probs:[.003,.002,.008,.967,.005,.002,.004,.006,.003],
+      vit_pred:'Edge-Ring', resnet_pred:'Edge-Ring' },
+    { class_name:'Scratch',   class_idx:7, confidence:0.812,
+      method:'tta',      softmax_probs:[.02,.01,.05,.03,.04,.01,.02,.812,.008],
+      vit_pred:'Scratch', resnet_pred:'Edge-Loc' },
+    { class_name:'Center',    class_idx:0, confidence:0.951,
+      method:'vit',      softmax_probs:[.951,.01,.01,.005,.008,.004,.005,.004,.003],
+      vit_pred:'Center',  resnet_pred:null },
+    { class_name:'Loc',       class_idx:4, confidence:0.734,
+      method:'resnet',   softmax_probs:[.05,.02,.08,.03,.734,.01,.02,.05,.006],
+      vit_pred:null,      resnet_pred:'Loc' },
+    { class_name:'none',      class_idx:8, confidence:0.892,
+      method:'ensemble', softmax_probs:[.01,.01,.01,.01,.01,.01,.01,.01,.892],
+      vit_pred:'none',    resnet_pred:'none' },
+  ];
+let mockIdx = 0;
+
+function mockPredict(method) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      const r = { ...MOCK_RESPONSES[mockIdx % MOCK_RESPONSES.length], method };
+      mockIdx++;
+      resolve(r);
+    }, 1400 + Math.random() * 600);
+  });
+}
+
+// ── STATE ────────────────────────────────────────────────────────
+let selectedMethod = 'ensemble';
+  let selectedModel  = 'large';
+let hasFile = false;
+
+function selectMethod(m, btn) {
+  selectedMethod = m;
+  document.querySelectorAll('#method-row .method-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+  function selectModel(m, btn) {
+    selectedModel = m;
+    document.querySelectorAll('#model-row .method-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  }
+
+function handleFile(file) {
+  if (!file) return;
+  hasFile = true;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('preview-img');
+    const def = document.getElementById('upload-default');
+    prev.src = e.target.result;
+    prev.style.display = 'block';
+    def.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  document.getElementById('btn-predict').disabled = false;
+  resetResult();
+}
+
+// Drag-and-drop support
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+async function runInference() {
+    const btn = document.getElementById('btn-predict');
+    btn.disabled = true;
+    document.getElementById('result-empty').style.display   = 'none';
+    document.getElementById('result-content').style.display = 'none';
+    document.getElementById('result-loading').style.display = 'flex';
+
+    const loadingMsgs = ['Running inference…','Preprocessing image…',
+                         'Classifying…','Computing probabilities…'];
+    let li = 0;
+    const lt = setInterval(() => {
+      document.getElementById('loading-text').textContent = loadingMsgs[li++ % loadingMsgs.length];
+    }, 400);
+
+    try {
+      const fileInput = document.getElementById('file-input');
+      const file = fileInput.files[0];
+      let result;
+
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('method', selectedMethod);
+        const resp = await fetch(`${API_BASE}/predict`, {
+          method: 'POST',
+          body:   formData,
+          signal: AbortSignal.timeout(30000),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+          throw new Error(err.detail || `HTTP ${resp.status}`);
+        }
+        result = await resp.json();
+        const banner = document.getElementById('mock-banner');
+        if (banner) banner.style.display = 'none';
+      } else {
+        result = await mockPredict(selectedMethod);
+      }
+
+      clearInterval(lt);
+      document.getElementById('result-loading').style.display = 'none';
+      renderResult(result);
+
+    } catch(err) {
+      clearInterval(lt);
+      document.getElementById('result-loading').style.display = 'none';
+      console.warn('[predict] API error:', err.message, '— using mock fallback');
+      const result = await mockPredict(selectedMethod);
+      renderResult(result);
+    }
+    btn.disabled = false;
+
+function renderResult(r) {
+    const className = r.predicted_class || r.class_name || r.classname || 'Unknown';
+    const probs     = r.softmax_probs   || r.softmaxprobs || [];
+    const isMock    = !r.wafer_id;
+
+    const col   = CLASS_COLORS[className] || { bg:'var(--surface-3)', text:'var(--text)' };
+    const badge = document.getElementById('class-badge');
+    badge.textContent      = className;
+    badge.style.background = col.bg;
+    badge.style.color      = col.text;
+
+    const pct  = Math.round((r.confidence || 0) * 100);
+    document.getElementById('conf-value').textContent = pct + '%';
+    const fill = document.getElementById('conf-fill');
+    fill.style.width      = '0';
+    fill.style.background = pct >= 90 ? 'var(--success)' : pct >= 70 ? 'var(--warning)' : 'var(--error)';
+    setTimeout(() => fill.style.width = pct + '%', 50);
+
+    const tags = document.getElementById('result-tags');
+    tags.innerHTML = '';
+    const addTag = (text, cls) => {
+      const t = document.createElement('span');
+      t.className = 'result-tag ' + (cls || '');
+      t.textContent = text;
+      tags.appendChild(t);
+    };
+
+    addTag('method: ' + (r.method || 'ensemble'));
+    if (r.model_variant) addTag('model: ' + r.model_variant);
+    if (r.vit_pred)    addTag('ViT: '    + r.vit_pred,    r.vit_pred    === className ? 'green' : 'yellow');
+    if (r.resnet_pred) addTag('ResNet: ' + r.resnet_pred, r.resnet_pred === className ? 'green' : 'yellow');
+    if (isMock) addTag('mock', 'yellow');
+
+    const probRows = document.getElementById('prob-rows');
+    probRows.innerHTML = '';
+    CLASS_NAMES.forEach((cls, i) => {
+      const p     = probs[i] || 0;
+      const isTop = cls === className;
+      const row   = document.createElement('div');
+      row.className = 'prob-row';
+      row.innerHTML =
+        `<span class="prob-class ${isTop?'top':''}">${cls}</span>
+         <div class="prob-bar-track"><div class="prob-bar-fill ${isTop?'top':''}" style="width:0" data-w="${Math.round(p*100)}"></div></div>
+         <span class="prob-pct ${isTop?'top':''}">${(p*100).toFixed(1)}%</span>`;
+      probRows.appendChild(row);
+    });
+    setTimeout(() => {
+      probRows.querySelectorAll('.prob-bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+    }, 80);
+    document.getElementById('result-content').style.display = 'flex';
+  };
+  addTag('method: ' + r.method);
+
+  // Per-class probabilities
+  const probRows = document.getElementById('prob-rows');
+  probRows.innerHTML = '';
+  const probs = r.softmax_probs || [];
+  CLASS_NAMES.forEach((cls, i) => {
+    const p = probs[i] || 0;
+    const isTop = cls === r.class_name;
+    const row = document.createElement('div');
+    row.className = 'prob-row';
+    row.innerHTML = `
+      <span class="prob-class ${isTop?'top':''}">${cls}</span>
+      <div class="prob-bar-track"><div class="prob-bar-fill ${isTop?'top':''}" style="width:0%" data-w="${Math.round(p*100)}"></div></div>
+      <span class="prob-pct ${isTop?'top':''}">${(p*100).toFixed(1)}%</span>`;
+    probRows.appendChild(row);
+  });
+  // Animate bars
+  setTimeout(() => {
+    probRows.querySelectorAll('.prob-bar-fill').forEach(b => b.style.width = b.dataset.w + '%');
+  }, 80);
+
+  document.getElementById('result-content').style.display = 'flex';
+}
+
+function resetResult() {
+  document.getElementById('result-empty').style.display = 'flex';
+  document.getElementById('result-content').style.display = 'none';
+  document.getElementById('result-loading').style.display = 'none';
+}
+
+function resetInference() {
+  hasFile = false;
+  document.getElementById('btn-predict').disabled = true;
+  const prev = document.getElementById('preview-img');
+  prev.style.display = 'none';
+  prev.src = '';
+  document.getElementById('upload-default').style.display = '';
+  document.getElementById('file-input').value = '';
+  resetResult();
+}
+
+// ── PAGE ROUTING ─────────────────────────────────────────────────
+function showPage(name) {
+  ['overview','inference','performance','history','pipeline'].forEach(p => {
+    document.getElementById('page-'+p).style.display = p===name ? '' : 'none';
+  });
+  document.querySelectorAll('.sidebar-item').forEach((btn,i) => {
+    btn.classList.toggle('active', ['overview','inference','performance','history','pipeline'][i]===name);
+  });
+}
+
+// ── THEME TOGGLE ─────────────────────────────────────────────────
+(function(){
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let t = 'dark';
+  const sun = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+  const moon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  function setTheme(v){ t=v; root.setAttribute('data-theme',v); btn.innerHTML=v==='dark'?moon:sun; }
+  btn && btn.addEventListener('click', ()=> setTheme(t==='dark'?'light':'dark'));
+  setTheme('dark');
+})();
+
+
+// ── CHART DATA ───────────────────────────────────────────────────
+// Seeded from results/comparison_report.md via GET /results
+// Fallback values used if API is not yet live
+const CLASS_LABELS = ['Center','Donut','Edge-Loc','Edge-Ring','Loc','Near-full','Random','Scratch','none'];
+
+// FALLBACK — mirrors results/comparison_report.md exactly
+// Overwritten by fetchResults() once API is live
+// Fallback = real values from model_large/results/from_scratch/comparison.md
+let F1_STAGE1 = [0.6338, 0.7114, 0.6825, 0.8408, 0.6526, 0.9388, 0.7672, 0.5573, 0.9793]; // ensemble
+let F1_STAGE2 = [0.4640, 0.5029, 0.5061, 0.7130, 0.3859, 0.9681, 0.7129, 0.0584, 0.9106]; // vit
+let MACRO_F1_S1 = 0.7515, MACRO_F1_S2 = 0.5802;   // ensemble test, vit test
+let ACC_S1 = 0.9557, ACC_S2 = 0.8319;              // ensemble acc, vit acc
+let TEMP_T = 0.8745;
+let DATA_SOURCE = 'fallback'; // 'live' once API responds
+
+// DIST — real test-set distribution from confusion matrix row sums
+let DIST_COUNTS = [832, 146, 2772, 1126, 1973, 95, 257, 693, 110701];
+let DIST_SOURCE = 'test-set';
+
+// ── FETCH /results from FastAPI ───────────────────────────────────
+// Parses results/comparison_report.md off disk — no hardcoding on server side
+async function fetchResults() {
+  try {
+    const resp = await fetch(`${API_BASE}/results`, { signal: AbortSignal.timeout(3000) });
+    if (!resp.ok) throw new Error('not ok');
+    const d = await resp.json();
+
+    // Overwrite fallback values with live data
+    F1_STAGE1   = CLASS_LABELS.map(c => d.stage1?.per_class_f1?.[c]  ?? 0);  // Ensemble
+    F1_STAGE2   = CLASS_LABELS.map(c => d.vit?.per_class_f1?.[c]    ?? 0);  // ViT
+    MACRO_F1_S1 = d.stage1?.macro_f1  ?? MACRO_F1_S1;   // Ensemble test F1
+    MACRO_F1_S2 = d.vit?.macro_f1     ?? MACRO_F1_S2;   // ViT test F1
+    ACC_S1      = d.stage1?.accuracy  ?? ACC_S1;         // Ensemble acc
+    ACC_S2      = d.vit?.accuracy     ?? ACC_S2;         // ViT acc
+    TEMP_T      = d.temperature       ?? TEMP_T;
+    DATA_SOURCE = 'live';
+
+    updateDataSourceBadge('live');
+    rebuildCharts();
+    rebuildKPIs();
+    // Also update Overview KPI card
+    const ovF1 = document.getElementById('kpi-overview-f1');
+    if (ovF1) ovF1.textContent = (d.stage1?.macro_f1 ?? MACRO_F1_S1).toFixed(4);
+    // Populate test-set distribution if DB is empty
+    if (d.test_distribution && DIST_SOURCE !== 'live') {
+      DIST_COUNTS = CLASS_LABELS.map(c => d.test_distribution[c] || 0);
+      DIST_SOURCE = 'test-set';
+      if (chartDist) { chartDist.data.datasets[0].data = DIST_COUNTS; chartDist.update(); }
+    }
+    console.log('[results] Live data loaded from API');
+  } catch(e) {
+    DATA_SOURCE = 'fallback';
+    updateDataSourceBadge('fallback');
+    console.log('[results] API not reachable — using fallback values from results/from_scratch/comparison.md');
+  }
+}
+
+// ── FETCH /stats for class distribution ──────────────────────────
+async function fetchStats() {
+  try {
+    const resp = await fetch(`${API_BASE}/stats`, { signal: AbortSignal.timeout(3000) });
+    if (!resp.ok) throw new Error('not ok');
+    const d = await resp.json();
+    if (d.by_class && Object.keys(d.by_class).length > 0) {
+      DIST_COUNTS = CLASS_LABELS.map(c => d.by_class[c] || 0);
+      DIST_SOURCE = 'live';
+      if (chartDist) { chartDist.data.datasets[0].data = DIST_COUNTS; chartDist.update(); }
+    }
+  } catch(e) {
+    console.log('[stats] API not reachable — using mock distribution');
+  }
+}
+
+  async function fetchHealth() {
+    try {
+      const resp = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2000) });
+      if (!resp.ok) return;
+      const d = await resp.json();
+      // API is reachable — hide mock banner regardless of model_loaded
+      const banner = document.getElementById('mock-banner');
+      if (banner) banner.style.display = 'none';
+      const badge = document.querySelector('.nav-badge');
+      if (badge && d.model_variant) {
+        badge.textContent = d.model_variant === 'large'
+          ? `LargeViT · ${d.resnet_arch}`
+          : `SmallViT · ${d.resnet_arch}`;
+      }
+      const dot = document.querySelector('.live-dot');
+      if (d.model_loaded) {
+        if (dot) { dot.textContent = 'Model Online'; dot.style.color = 'var(--success)'; }
+      } else {
+        if (dot) { dot.textContent = 'Model Offline'; dot.style.color = 'var(--error)'; }
+      }
+    } catch(e) { /* best-effort */ }
+  }
+
+// ── FETCH /threshold for threshold-tuning panel ──────────────────
+async function fetchThreshold() {
+  try {
+    const resp = await fetch(`${API_BASE}/threshold`, { signal: AbortSignal.timeout(4000) });
+    if (!resp.ok) return;
+    const d = await resp.json();
+    if (d.chosen) {
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set('thr-coverage',  (d.chosen.coverage  * 100).toFixed(1) + '%');
+      set('thr-precision', (d.chosen.precision * 100).toFixed(1) + '%');
+      set('thr-accepted',  d.chosen.accepted.toLocaleString());
+      set('thr-tau-clf',     d.chosen.tau_clf);
+      set('thr-tau-entropy', d.chosen.tau_entropy);
+      set('thr-tau-cos',     d.chosen.tau_cos);
+      set('thr-tau-margin',  d.chosen.tau_margin);
+      set('thr-tau-knn',     d.chosen.tau_knn);
+    }
+    if (d.sweep && d.sweep.length > 0 && document.getElementById('thr-sweep-count')) {
+      document.getElementById('thr-sweep-count').textContent = d.sweep.length + ' combos evaluated';
+    }
+    console.log('[threshold] Loaded from API');
+  } catch(e) { console.log('[threshold] Not available'); }
+}
+
+function updateDataSourceBadge(source) {
+  const badge = document.getElementById('data-source-badge');
+  if (!badge) return;
+  if (source === 'live') {
+    badge.textContent = '● Live — results/from_scratch/comparison.md';
+    badge.style.color = 'var(--success)';
+  } else {
+    badge.textContent = '○ Fallback — wire GET /results to go live';
+    badge.style.color = 'var(--warning)';
+  }
+}
+
+function rebuildCharts() {
+  if (chartF1Full) {
+    chartF1Full.data.datasets[0].data = F1_STAGE1;
+    chartF1Full.data.datasets[1].data = F1_STAGE2;
+    chartF1Full.update();
+  }
+  if (chartOverviewF1) {
+    chartOverviewF1.data.datasets[0].data = F1_STAGE1;
+    chartOverviewF1.data.datasets[0].backgroundColor = F1_STAGE1.map(v =>
+      v >= 0.90 ? 'rgba(45,212,191,0.8)' : v >= 0.80 ? 'rgba(251,191,36,0.8)' : 'rgba(248,113,113,0.8)');
+    chartOverviewF1.update();
+  }
+}
+
+function rebuildKPIs() {
+  // Update Performance page KPI values if rendered
+  const el = id => document.getElementById(id);
+  if (el('kpi-live-s1-f1')) el('kpi-live-s1-f1').textContent = MACRO_F1_S1.toFixed(4);
+  if (el('kpi-live-s2-f1')) el('kpi-live-s2-f1').textContent = MACRO_F1_S2.toFixed(4);
+  if (el('kpi-live-s1-acc')) el('kpi-live-s1-acc').textContent = (ACC_S1*100).toFixed(1) + '%';
+  if (el('kpi-live-s2-acc')) el('kpi-live-s2-acc').textContent = (ACC_S2*100).toFixed(1) + '%';
+  if (el('kpi-live-temp')) el('kpi-live-temp').textContent = 'T = ' + TEMP_T.toFixed(4);
+}
+
+const CHART_TEAL  = 'rgba(45,212,191,0.85)';
+const CHART_RED   = 'rgba(248,113,113,0.75)';
+const CHART_TEAL_BORDER = 'rgba(45,212,191,1)';
+const CHART_RED_BORDER  = 'rgba(248,113,113,1)';
+
+// Colour per class for donut
+const DIST_COLORS = [
+  '#2dd4bf','#fbbf24','#f87171','#60a5fa',
+  '#f87171','#a78bfa','#34d399','#fb923c','#6b7280'
+];
+
+function getChartDefaults() {
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  return {
+    gridColor:  isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    textColor:  isDark ? '#8b90a0' : '#5a5f72',
+    tickColor:  isDark ? '#4a4f60' : '#adb2c4',
+  };
+}
+
+let chartF1Full = null, chartOverviewF1 = null, chartDist = null;
+
+function buildCharts() {
+  const d = getChartDefaults();
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // ── 1. Full per-class grouped bar (Performance page) ────────────
+  const ctx1 = document.getElementById('chart-per-class-f1');
+  if (ctx1 && !chartF1Full) {
+    chartF1Full = new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: CLASS_LABELS,
+        datasets: [
+          { label: 'Ensemble', data: F1_STAGE1, backgroundColor: CHART_TEAL,
+            borderColor: CHART_TEAL_BORDER, borderWidth: 1, borderRadius: 4 },
+          { label: 'ViT', data: F1_STAGE2, backgroundColor: CHART_RED,
+            borderColor: CHART_RED_BORDER, borderWidth: 1, borderRadius: 4 },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${(ctx.parsed.y).toFixed(4)}`
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: d.gridColor }, ticks: { color: d.textColor, font: { size: 11 } } },
+          y: {
+            min: 0.0, max: 1.0,
+            grid: { color: d.gridColor },
+            ticks: { color: d.textColor, font: { size: 11 },
+              callback: v => v.toFixed(2) }
+          }
+        }
+      }
+    });
+  }
+
+  // ── 2. Mini overview F1 bar ───────────────────────────────────
+  const ctx2 = document.getElementById('chart-overview-f1');
+  if (ctx2 && !chartOverviewF1) {
+    chartOverviewF1 = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: CLASS_LABELS,
+        datasets: [{
+          label: 'Ensemble F1',
+          data: F1_STAGE1,
+          backgroundColor: F1_STAGE1.map(v =>
+            v >= 0.90 ? 'rgba(45,212,191,0.8)' :
+            v >= 0.80 ? 'rgba(251,191,36,0.8)' : 'rgba(248,113,113,0.8)'),
+          borderRadius: 3, borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: { callbacks: { label: c => ` F1: ${c.parsed.y.toFixed(4)}` } } },
+        scales: {
+          x: { grid: { display: false }, ticks: { color: d.textColor, font: { size: 9 }, maxRotation: 45 } },
+          y: { min: 0.0, max: 1.0, grid: { color: d.gridColor },
+            ticks: { color: d.tickColor, font: { size: 9 }, callback: v => v.toFixed(1) } }
+        }
+      }
+    });
+  }
+
+  // ── 3. Class distribution donut ───────────────────────────────
+  const ctx3 = document.getElementById('chart-class-dist');
+  if (ctx3 && !chartDist) {
+    chartDist = new Chart(ctx3, {
+      type: 'doughnut',
+      data: {
+        labels: CLASS_LABELS,
+        datasets: [{
+          data: DIST_COUNTS,
+          backgroundColor: DIST_COLORS,
+          borderWidth: 2,
+          borderColor: document.documentElement.getAttribute('data-theme') === 'light' ? '#ffffff' : '#13161b',
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: d.textColor, font: { size: 10 }, boxWidth: 10, padding: 8 }
+          },
+          tooltip: {
+            callbacks: {
+              label: c => {
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const pct = ((c.parsed/total)*100).toFixed(1);
+                return ` ${c.label}: ${c.parsed.toLocaleString()} (${pct}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+// ── F1 TABLE ─────────────────────────────────────────────────────
+function buildF1Table() {
+  const tbody = document.getElementById('f1-table-body');
+  if (!tbody) return; tbody.innerHTML = ''; // rebuild with live data each time
+  CLASS_LABELS.forEach((cls, i) => {
+    const s1 = F1_STAGE1[i], s2 = F1_STAGE2[i]; // s1=Ensemble, s2=ViT
+    const delta = s1 - s2; // Ensemble minus ViT (positive = ensemble better)
+    const failed = s1 < 0.75; // flag weak ensemble classes
+    const status = s1 >= 0.90 ? '✅ Strong' : s1 >= 0.75 ? '🟡 Moderate' : '🔴 Weak'; // based on ensemble absolute F1
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid var(--divider)';
+    tr.innerHTML = `
+      <td style="padding:var(--space-2) var(--space-3);font-weight:${s1<0.80?'600':'400'};color:var(--text)">${cls}</td>
+      <td style="padding:var(--space-2) var(--space-3);text-align:right;font-family:var(--font-mono);color:var(--primary)">${s1.toFixed(4)}</td>
+      <td style="padding:var(--space-2) var(--space-3);text-align:right;font-family:var(--font-mono);color:${s2<0.70?'var(--error)':'var(--text-muted)'}">${s2.toFixed(4)}</td>
+      <td style="padding:var(--space-2) var(--space-3);text-align:right;font-family:var(--font-mono);color:${failed?'var(--error)':'var(--text-faint)'}">${delta>0?'+':''}${delta.toFixed(4)}</td>
+      <td style="padding:var(--space-2) var(--space-3);font-size:var(--text-xs)">${status}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+
+
+// ── PREDICTION LOG ────────────────────────────────────────────────
+const MOCK_HISTORY = [
+  { wafer_id:'a3f2b1c0e9d8', predicted_class:'Edge-Ring', confidence:0.967, method:'direct',  created_at:'2026-04-25T19:58:11' },
+  { wafer_id:'b7e4a2d1f3c9', predicted_class:'Scratch',   confidence:0.812, method:'tta',     created_at:'2026-04-25T19:57:44' },
+  { wafer_id:'c1d9e8f7a6b5', predicted_class:'Center',    confidence:0.951, method:'direct',  created_at:'2026-04-25T19:56:30' },
+  { wafer_id:'d4c3b2a1e0f9', predicted_class:'Loc',       confidence:0.734, method:'tta',     created_at:'2026-04-25T19:55:02' },
+  { wafer_id:'e5f4d3c2b1a0', predicted_class:'none',      confidence:0.892, method:'direct',  created_at:'2026-04-25T19:53:48' },
+  { wafer_id:'f6a5e4d3c2b1', predicted_class:'Donut',     confidence:0.940, method:'ensemble',created_at:'2026-04-25T19:52:11' },
+  { wafer_id:'a7b6c5d4e3f2', predicted_class:'Edge-Loc',  confidence:0.783, method:'direct',  created_at:'2026-04-25T19:50:55' },
+];
+
+async function loadHistory() {
+  const tbody = document.getElementById('history-tbody');
+  if (!tbody) return;
+
+  let rows = null;
+  let isLive = false;
+
+  try {
+    const resp = await fetch(`${API_BASE}/history?limit=20`, { signal: AbortSignal.timeout(3000) });
+    if (resp.ok) {
+      rows = await resp.json();
+      isLive = true;
+    }
+  } catch(e) {}
+
+  if (!rows || rows.length === 0) {
+    rows = MOCK_HISTORY;
+    isLive = false;
+  }
+
+  // Source badge
+  const badge = document.getElementById('log-source-badge');
+  if (badge) {
+    badge.textContent = isLive ? '● live · SQLite' : '○ mock · wire GET /history';
+    badge.style.color = isLive ? 'var(--success)' : 'var(--warning)';
+  }
+
+  const dbBadge = document.getElementById('log-db-badge');
+  const dbType  = document.getElementById('log-db-type');
+  if (dbBadge) dbBadge.textContent = isLive ? 'Connected' : 'Not connected';
+  if (dbType)  dbType.textContent  = isLive ? 'SQLite' : 'Start api.py first';
+
+  // Stats
+  const confs = rows.filter(r => r.confidence != null).map(r => r.confidence);
+  const avgConf = confs.length ? (confs.reduce((a,b)=>a+b,0)/confs.length) : null;
+  const total = document.getElementById('log-total');
+  const lastCls = document.getElementById('log-last-class');
+  const lastTime = document.getElementById('log-last-time');
+  const avgEl = document.getElementById('log-avg-conf');
+  if (total) total.textContent = rows.length + (isLive ? '' : '+');
+  if (lastCls && rows[0]) lastCls.textContent = rows[0].predicted_class;
+  if (lastTime && rows[0]) lastTime.textContent = formatTime(rows[0].created_at);
+  if (avgEl) avgEl.textContent = avgConf ? (avgConf*100).toFixed(1)+'%' : '—';
+
+  // Render rows
+  tbody.innerHTML = '';
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:var(--space-8);color:var(--text-muted);">No predictions yet. Run an inference first.</td></tr>';
+    return;
+  }
+
+  rows.forEach(r => {
+    const col = CLASS_COLORS[r.predicted_class] || { bg:'var(--surface-3)', text:'var(--text-muted)' };
+    const conf = r.confidence != null ? Math.round(r.confidence*100) : '—';
+    const confColor = conf >= 90 ? 'var(--success)' : conf >= 70 ? 'var(--warning)' : 'var(--error)';
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid var(--divider)';
+    tr.style.transition = 'background var(--transition)';
+    tr.addEventListener('mouseenter', ()=> tr.style.background='var(--surface-2)');
+    tr.addEventListener('mouseleave', ()=> tr.style.background='');
+    tr.innerHTML = `
+      <td style="padding:var(--space-3) var(--space-4);font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-faint)">${r.wafer_id || '—'}</td>
+      <td style="padding:var(--space-3) var(--space-4);">
+        <span style="display:inline-flex;align-items:center;gap:var(--space-1);padding:2px var(--space-2);border-radius:var(--radius-sm);background:${col.bg};color:${col.text};font-size:var(--text-xs);font-weight:600;">${r.predicted_class}</span>
+      </td>
+      <td style="padding:var(--space-3) var(--space-4);text-align:right;font-family:var(--font-mono);font-size:var(--text-xs);color:${confColor}">${conf}%</td>
+      <td style="padding:var(--space-3) var(--space-4);font-family:var(--font-mono);font-size:var(--text-xs);color:var(--text-muted)">${r.method || '—'}</td>
+      <td style="padding:var(--space-3) var(--space-4);font-size:var(--text-xs);color:var(--text-faint)">${formatTime(r.created_at)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function formatTime(ts) {
+  if (!ts) return '—';
+  try {
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) +
+           ' · ' + d.toLocaleDateString([], {month:'short',day:'numeric'});
+  } catch { return ts; }
+}
+
+// ── STARTUP ───────────────────────────────────────────────────────
+// Fire all data fetches on page load
+(async function init() {
+  await fetchResults();   // live F1 from /results → falls back to real comparison.md values
+  await fetchStats();
+  fetchHealth();
+  fetchThreshold();       // threshold-tuning panel
+})();
+
+// Refresh history when tab is opened
+const _origShowPage2 = window.showPage;
+window.showPage = function(name) {
+  _origShowPage2(name);
+  if (name === 'history') setTimeout(loadHistory, 50);
+};
+// Initial load of history
+setTimeout(loadHistory, 200);
+
+// Init charts when overview loads, rebuild when switching to performance
+const _origShowPage = showPage;
+window.showPage = function(name) {
+  _origShowPage(name);
+  setTimeout(() => {
+    buildCharts();
+    if (name === 'performance') buildF1Table();
+  }, 50);
+};
+
+// Build overview charts on load
+setTimeout(() => { buildCharts(); }, 100);
+
+</script>
+</body>
+</html>
